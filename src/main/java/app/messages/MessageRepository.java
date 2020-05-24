@@ -1,24 +1,24 @@
 package app.messages;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MessageRepository {
-
   private static final Log logger = LogFactory.getLog(MessageRepository.class);
+  private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired
+  public void setDataSource(DataSource dataSource) {
+    this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+  }
 
   private DataSource dataSource;
 
@@ -27,38 +27,20 @@ public class MessageRepository {
   }
 
   public Message saveMessage(Message message) {
-    Connection c = DataSourceUtils.getConnection(dataSource);
+    GeneratedKeyHolder holder = new GeneratedKeyHolder();
+    
+    // 생성된 레코드의 키값을 받을 객체 및 SQL에 들어갈 파라미터들
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    params.addValue("text", message.getText());
+    params.addValue("createdDate", message.getCreatedDate());
+    String insertSQL = "INSERT INTO messages (`id`, `text`, `created_date`) VALUE (null, :text, :createdDate)";
     try {
-      String insertSql = "INSERT INTO messages (`id`, `text`, `created_date`) VALUE (null, ?, ?)";
-      PreparedStatement ps = c.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
-      // SQL에 필요한 매개변수를 준비한다
-      ps.setString(1, message.getText());
-      ps.setTimestamp(2, new Timestamp(message.getCreatedDate().getTime()));
-      int rowsAffected = ps.executeUpdate();
-      if (rowsAffected > 0) {
-        // 새로 저장된 메시지 id가져오기
-        ResultSet result = ps.getGeneratedKeys();
-        if (result.next()) {
-          int id = result.getInt(1);
-          return new Message(id, message.getText(), message.getCreatedDate());
-        } else {
-          logger.error("Failed to retrieve id. No row in result set");
-          return null;
-        }
-      } else {
-        // Insert did not succeed
-        return null;
-      }
-    } catch (SQLException ex) {
-      logger.error("Failed to save message", ex);
-      try {
-        c.close();
-      } catch (SQLException e) {
-        logger.error("Failed to close connection", e);
-      }
-    } finally {
-      DataSourceUtils.releaseConnection(c, dataSource);
+      this.jdbcTemplate.update(insertSQL, params, holder);
+    } catch (DataAccessException e) {
+      logger.error("Failed to save message", e);
+      return null;
     }
-    return null;
+    // 생성된 레코드의 내용을 담은 해당하는 객체
+    return new Message(holder.getKey().intValue(), message.getText(), message.getCreatedDate());
   }
 }
