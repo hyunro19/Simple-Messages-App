@@ -11,7 +11,7 @@ public class MessageRepository {
     this.sessionFactory = sessionFactory;
   }
   public Message saveMessage(Message message) {
-    Session session = sessionFactory.openSession();
+    Session session = sessionFactory.getCurrentSession();
     session.save(message);
     return message;
   }

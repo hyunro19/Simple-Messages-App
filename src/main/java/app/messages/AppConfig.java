@@ -8,10 +8,13 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @ComponentScan("app.messages")
+@EnableTransactionManagement
 public class AppConfig {
 
   private DataSource dataSource;
@@ -35,5 +38,12 @@ public class AppConfig {
     sessionFactoryBean.setDataSource(dataSource);
     sessionFactoryBean.setPackagesToScan("app.messages");
     return sessionFactoryBean;
+  }
+
+  @Bean
+  public HibernateTransactionManager transactionManager() {
+    HibernateTransactionManager transactionManager = new HibernateTransactionManager();
+    transactionManager.setSessionFactory(sessionFactory().getObject());
+    return transactionManager;
   }
 }
