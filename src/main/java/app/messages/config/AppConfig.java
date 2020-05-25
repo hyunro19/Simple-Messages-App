@@ -1,4 +1,4 @@
-package app.messages;
+package app.messages.config;
 
 import java.util.Arrays;
 
@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import app.messages.web.AuditingFilter;
+
 
 @Configuration
 @ComponentScan("app.messages")

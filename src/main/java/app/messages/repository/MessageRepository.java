@@ -1,8 +1,12 @@
-package app.messages;
+package app.messages.repository;
 
+import java.util.List;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Component;
+
+import app.messages.model.Message;
 
 @Component
 public class MessageRepository {
@@ -10,6 +14,14 @@ public class MessageRepository {
   public MessageRepository(SessionFactory sessionFactory) {
     this.sessionFactory = sessionFactory;
   }
+
+  public List<Message> getMessages() {
+    Session session = sessionFactory.getCurrentSession();
+    String hql = "from Message";
+    Query<Message> query = session.createQuery(hql, Message.class);
+    return query.list();
+  }
+
   public Message saveMessage(Message message) {
     Session session = sessionFactory.getCurrentSession();
     session.save(message);
